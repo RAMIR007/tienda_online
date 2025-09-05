@@ -128,3 +128,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Puerto por defecto de React
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+# Configuración para Djoser
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+    'USER_CREATE_PASSWORD_RETYPE': True,
+    'ACTIVATION_URL': 'activate/{uid}/{token}',
+    'SERIALIZERS': {},
+    'TOKEN_MODEL': None,
+}
+# Configuración de correo (para activaciones, opcional)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
