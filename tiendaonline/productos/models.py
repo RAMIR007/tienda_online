@@ -21,7 +21,7 @@ class ItemCarrito(models.Model):
 
 class PerfilUsuario(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=200, blank=True)
+    nombre = models.CharField(max_length=200, blank=True)
     apellidos = models.CharField(max_length=200, blank=True)
     telefono = models.CharField(max_length=20, blank=True)
     direccion = models.TextField(blank=True)

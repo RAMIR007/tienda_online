@@ -1,7 +1,7 @@
 from rest_framework import generics, viewsets, permissions
 from rest_framework.response import Response
-from .models import Producto, Carrito, ItemCarrito
-from .serializers import ProductoSerializer, CarritoSerializer
+from .models import Producto, Carrito, ItemCarrito, PerfilUsuario
+from .serializers import ProductoSerializer, CarritoSerializer, PerfilUsuarioSerializer
 from reportlab.pdfgen import canvas
 from django.http import FileResponse
 from rest_framework.decorators import api_view, permission_classes
@@ -101,3 +101,11 @@ def generar_vale(request):
     p.save()
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename="vale_pago.pdf")
+
+class PerfilUsuarioView(generics.RetrieveUpdateAPIView):
+    serializer_class = PerfilUsuarioSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        perfil, created = PerfilUsuario.objects.get_or_create(usuario=self.request.user)
+        return perfil
