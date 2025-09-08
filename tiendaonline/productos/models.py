@@ -19,3 +19,12 @@ class ItemCarrito(models.Model):
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     cantidad = models.PositiveIntegerField(default=1)    
 
+class PerfilUsuario(models.Model):
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=200, blank=True)
+    apellidos = models.CharField(max_length=200, blank=True)
+    telefono = models.CharField(max_length=20, blank=True)
+    direccion = models.TextField(blank=True)
+
+    def __str__(self):
+        return f"Perfil de {self.usuario.email}"

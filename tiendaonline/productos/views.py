@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from .models import Producto, Carrito, ItemCarrito
 from .serializers import ProductoSerializer, CarritoSerializer
 from reportlab.pdfgen import canvas
-from django.http import HttpResponse
+from django.http import FileResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 class ProductoListCreate(generics.ListCreateAPIView):
@@ -42,24 +42,62 @@ class CarritoViewSet(viewsets.ViewSet):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def generar_vale(request):
-    # Información básica del usuario y fecha
+    # Crear buffer para PDF
+    buffer = io.BytesIO()
+    p = canvas.Canvas(buffer)
+
+    # Datos usuario y fecha
     usuario = request.user
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="vale_pago.pdf"'
-
-    p = canvas.Canvas(response)
+    perfil = getattr(usuario, 'perfilusuario', None)
+    nombre = perfil.nombre if perfil else ''
+    apellidos = perfil.apellidos if perfil else ''
+    telefono = perfil.telefono if perfil else 'No registrado'
+    direccion = perfil.direccion if perfil else 'No registrada'
+    
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(200, 800, "Vale de Pago")
     p.setFont("Helvetica", 12)
-    p.drawString(100, 800, "Vale de Pago")
-    p.drawString(100, 780, f"Usuario: {usuario.email}")
-    p.drawString(100, 760, f"Fecha: {request.GET.get('fecha', 'N/A')}")
+    p.drawString(50, 770, f"Usuario: {usuario.email}")
+    p.drawString(50, 750, f"Nombre: {nombre} {apellidos}")
+    p.drawString(50, 730, f"Teléfono: {telefono}")
+    p.drawString(50, 710, f"Dirección: {direccion}")
+    p.drawString(50, 690, f"Fecha: {request.GET.get('fecha', 'N/A')}")
 
-    # Aquí puedes personalizar lo que necesites mostrar, por ejemplo:
-    p.drawString(100, 740, "Detalle de compra:")
-    p.drawString(120, 720, "Productos comprados, cantidades, total, etc.")
+    # Obtener carrito con items
+    try:
+        carrito = Carrito.objects.get(usuario=usuario)
+        items = carrito.items.all()
+    except Carrito.DoesNotExist:
+        items = []
 
-    # Por simplicidad, aquí solo mostramos texto estático.
-    # Puedes extender para mostrar items reales de la compra.
+    # Detalle productos en el vale
+    y = 700
+    total = 0
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(50, y, "Producto")
+    p.drawString(300, y, "Cantidad")
+    p.drawString(400, y, "Precio unitario")
+    p.drawString(520, y, "Subtotal")
+    y -= 20
+    p.setFont("Helvetica", 12)
 
+    for item in items:
+        p.drawString(50, y, item.producto.nombre)
+        p.drawString(300, y, str(item.cantidad))
+        p.drawString(400, y, f"${item.producto.precio:.2f}")
+        subtotal = item.cantidad * item.producto.precio
+        p.drawString(520, y, f"${subtotal:.2f}")
+        total += subtotal
+        y -= 20
+        if y < 100:
+            p.showPage()
+            y = 800
+
+    p.setFont("Helvetica-Bold", 14)
+    p.drawString(400, y - 20, f"Total: ${total:.2f}")
+
+    # Cerrar y enviar PDF
     p.showPage()
     p.save()
-    return response    
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename="vale_pago.pdf")
