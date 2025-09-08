@@ -1,9 +1,10 @@
 from django.urls import path
-from .views import ProductoListCreate, CarritoViewSet
+from .views import ProductoListCreate, CarritoViewSet, generar_vale
 
 carrito_list = CarritoViewSet.as_view({'get': 'list', 'put': 'update'})
 
 urlpatterns = [
     path('productos/', ProductoListCreate.as_view(), name='productos-list-create'),
-    path('carrito/', carrito_list, name='carrito')
+    path('carrito/', carrito_list, name='carrito'),
+    path('vale/', generar_vale, name='generar-vale'),
 ]
